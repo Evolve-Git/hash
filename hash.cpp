@@ -17,7 +17,7 @@ int main(int argc, char *argv[]) {
 		if (strstr(argv[1], OPT_F) != NULL) cVerb = true;
 
 		string folderPath = argv[2];
-		folderPath.erase(folderPath.find_last_not_of('/') + 1, std::string::npos );
+		formatPath(folderPath);
 		//string folder = "/home/evolve/git/hash";
 		if (checkFolder(folderPath)){
 			cout << "Path OK.\n";
@@ -25,7 +25,8 @@ int main(int argc, char *argv[]) {
 				saveHash(folderPath, verbose);
 			}
 			else if (strstr(argv[1], OPT_C) != NULL){
-				const string filePath = argv[3];
+				string filePath = argv[3];
+				formatPath(filePath);
 				if (checkFile(filePath)){
 					cout << "File OK.\n";
 					compareHashes(folderPath, filePath, verbose, cVerb);

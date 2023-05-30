@@ -5,19 +5,19 @@
 #include <sys/stat.h>
 #include <string.h>
 #include <filesystem>
+#include <algorithm>
 #include "sha256.h"
 
 const char* OPT_S = "s";	//get hashes and save them to a file
 const char* OPT_V = "v";	//verbose output
 const char* OPT_C = "c";	//get hashes and compare them to previously saved hashes
-const char* OPT_T = "t";	//compare mod time
-const char* OPT_Z = "z";	//compare size
 const char* OPT_F = "f";	//include passed checks in comparison
 
 const char* ST_PASS = "OK";
 const char* ST_MISS = "Missing";
 const char* ST_PRES = "Present";
 const char* ST_HASH = "Hash differs";
+const char* ST_NEW = "New";
 
 using namespace std;
 
@@ -30,6 +30,13 @@ void displayHelp(){
 			"saved previously\nadd \"v\" to enable verbose mode\nadd \"f\" to include successes to comparison mode.\n" <<
 			"Example 1, saving hashes:\nhashcomp -s /path/to/folder\n" <<
 			"Example 2, comparing hashes with output to the console:\nhashcomp -cv /path/to/folder /path/to/csv/file.csv";
+}
+
+void formatPath(string& folderPath){
+	folderPath.erase(folderPath.find_last_not_of('/') + 1, std::string::npos );
+	if (folderPath[0] == '.'){
+		folderPath.replace(0, 1, filesystem::current_path().generic_string());
+	}
 }
 
 bool checkFolder(const string& folderPath){
@@ -125,8 +132,10 @@ void saveHash(const string& folderPath, bool verbose){
 	ofstream csvFile(csvPath);
 
 	csvFile << "Filename,SHA256 Hash,Creation time,Last modification time,Size in bytes" << endl;
+	int counter = 0;
 
 	for (const string& file : files) {
+		counter++;
 		string hash = getHash(file);
 		getFileStats(file, stats);
 		string tmp = file;
@@ -136,7 +145,10 @@ void saveHash(const string& folderPath, bool verbose){
 			cout << "file " << file << "\n" << "SHA256 " << hash << "\n" << "creation time " << stats[0] << "\n"
 					<< "modification time " << stats[1] << "\n" << "size " << stats[2] << " bytes\n";
 		}
+		cout << "[" << counter << "/" << files.size() << "] \r";
+		cout.flush();
 	}
+	cout << "Done.                                                      " << endl;
 	cout << "Processed data saved to a file:" << csvPath << endl;
 
 	csvFile.close();
@@ -150,32 +162,55 @@ void compareHashes(const string& folderPath, const string& filePath, bool& verbo
 		ofstream csvFile(csvPath);
 		csvFile << "Status,Filename" << endl;
 
+		vector<string> files;
+		vector<string>::iterator itr;
+		getFilesInFolder(folderPath, files);
+
 		for (int i = 1; i < int(csvIn.size()); i++){
-			string file = folderPath + '/' + csvIn[i][0];
-			if (checkFile(file)){
-				string hash = getHash(file);
+			string csvEntry = folderPath + '/' + csvIn[i][0];
+			if (checkFile(csvEntry)){
+				string hash = getHash(csvEntry);
+
+				itr = std::find(files.begin(), files.end(), csvEntry);
+
+				if (itr != files.end()){
+					files.erase(itr);
+				}
+
 				if (hash.compare(csvIn[i][1]) == 0){
 					if (cVerb){
-						csvFile << ST_PASS << "," << file << endl;
+						csvFile << ST_PASS << "," << csvEntry << endl;
 					}
 					status = ST_PASS;
 				}
 				else{
-					csvFile << ST_HASH << "," << file << endl;
+					csvFile << ST_HASH << "," << csvEntry << endl;
 					status = ST_HASH;
 				}
 			}
 			else{
-				csvFile << ST_MISS << "," << file << endl;
+				csvFile << ST_MISS << "," << csvEntry << endl;
 				status = ST_MISS;
 			}
 			if (verbose || cVerb){
 				if (cVerb && status == ST_PASS){
-					cout << "\033[1;32m" + status + "\033[0m" << "  " << file << "\n";
+					cout << "\033[1;32m" + status + "\033[0m" << "  " << csvEntry << "\n";
 				}
 				else if (status != ST_PASS){
-					cout << "\033[1;31m" + status + "\033[0m" << "  " << file << "\n";
+					cout << "\033[1;31m" + status + "\033[0m" << "  " << csvEntry << "\n";
 				}
+			}
+			cout << "[" << i << "/" << csvIn.size() << "] \r";
+			cout.flush();
+		}
+
+		cout << "Done.                                                      " << endl;
+
+		if (!files.empty()){
+			for (const string& file : files){
+				csvFile << ST_NEW << "," << file << endl;
+				status = ST_NEW;
+				cout << "\033[1;32m" + status + "\033[0m" << "  " << file << "\n";
 			}
 		}
 
