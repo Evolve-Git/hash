@@ -1,5 +1,7 @@
 #include "hash.h"
 
+const int MAX_ARGS = 5;
+
 using namespace std;
 
 int main(int argc, char *argv[]) {
@@ -9,7 +11,7 @@ int main(int argc, char *argv[]) {
 	if (argc < 2){
 		displayHelp();
 	}
-	else if (argc > 4){
+	else if (argc > MAX_ARGS){
 		cout << "Too many arguments.";
 	}
 	else{
@@ -20,16 +22,24 @@ int main(int argc, char *argv[]) {
 		formatPath(folderPath);
 		//string folder = "/home/evolve/git/hash";
 		if (checkFolder(folderPath)){
-			cout << "Path OK.\n";
-			if (strstr(argv[1], OPT_S) != NULL){
+			cout << "Target path OK.\n";
+			if (strstr(argv[1], OPT_S) != NULL && strstr(argv[1], OPT_C) != NULL){
+				cout << "Conflicting options selected.";
+			}
+			else if (strstr(argv[1], OPT_S) != NULL){
 				saveHash(folderPath, verbose);
 			}
 			else if (strstr(argv[1], OPT_C) != NULL){
 				string filePath = argv[3];
 				formatPath(filePath);
 				if (checkFile(filePath)){
-					cout << "File OK.\n";
-					compareHashes(folderPath, filePath, verbose, cVerb);
+					cout << "Target file OK.\n";
+					vector<string> extensions;
+					if (strstr(argv[1], OPT_E) != NULL){
+						string ext = argv[4];
+						getFileExtensions(ext, extensions);
+					}
+					compareHashes(folderPath, filePath, verbose, cVerb, extensions);
 				}
 				else{
 					cout << "Csv file not found.";
