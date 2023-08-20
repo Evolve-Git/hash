@@ -42,14 +42,15 @@ int main(int argc, char *argv[]) {
 				else{
 					if (argv[count + 1]){
 						folderPath = argv[count + 1];
+						count += 1;
 					}
 					else{
 						cout << "No folder provided!\n";
 						goto exit;
 					}
-					if (argv[count + 2]){
-						filePath = argv[count + 2];
-						count += 3;
+					if (argv[count + 1]){
+						filePath = argv[count + 1];
+						count += 2;
 						modeSet = 2;
 					}
 					else{

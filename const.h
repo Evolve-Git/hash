@@ -27,7 +27,7 @@ const char* HELP =
 		"Comparison data will be saved to comparison-DATE.csv in the program directory.\n"
 		"General usage is: hashcomp [-option] [argument]\n"
 		"The options are:\n"
-		"-h to see this screen;"
+		"-h to see this screen;\n"
 		"-s [path/to/folder] to save hashes;\n"
 		"-c [path/to/folder] [path/to/file.csv]\n"
 		"to compare hashes from a folder to the ones saved previously;\n"
