@@ -8,6 +8,8 @@ The options are:
 -s [path/to/folder] to save hashes;  
 -c [path/to/folder] [path/to/file.csv]  
 to compare hashes from a folder to the ones saved previously;  
+-m [path/to/file] [path/to/folder/with/previously/saved/hashes]  
+to find a matching file(hash) in previously saved hashes;  
 -v to enable verbose mode;  
 -f to include successes in comparison mode;  
 -e [filetype1,filetype2,...] to compare only specified file types;  

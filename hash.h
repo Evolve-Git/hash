@@ -40,7 +40,7 @@ bool checkFolder(const string& folderPath){
 }
 
 bool checkFile(const string& filePath){
-	return filesystem::is_regular_file(filePath);
+	return (filesystem::path(filePath).extension() == CSV && filesystem::is_regular_file(filePath));
 }
 
 void getFileExtensions(string& ext, vector<string>& extensions){
@@ -81,7 +81,7 @@ void filterCsvExtensions(vector<vector<string>>& csvIn, vector<string>& extensio
 			iter = csvIn.erase(iter);
 		}
 		else{
-			iter++;
+			++iter;
 		}
 	}
 }
@@ -96,8 +96,8 @@ void ReplaceStringInPlace(string& subject, const string& search, const string& r
 }
 
 void checkOutputFilename(string& file){
-	if (filesystem::path(file).extension() != ".csv")
-		file += ".csv";
+	if (filesystem::path(file).extension() != CSV)
+		file += CSV;
 	checkDotPath(file);
 	ReplaceStringInPlace(file, DATE, getDate());
 }
@@ -186,7 +186,7 @@ void saveHash(const string& folderPath, string& outputFile, bool verbose, vector
 	vector<string> stats;
 
 	if (outputFile.empty())
-		outputFile = filesystem::current_path().generic_string() + "/hashes-" + getDate() + ".csv";
+		outputFile = filesystem::current_path().generic_string() + "/hashes-" + getDate() + CSV;
 	ofstream csvFile(outputFile);
 
 	csvFile << "Filename" << DELIMETER << "SHA256 Hash" << DELIMETER << "Creation time" << DELIMETER <<
@@ -215,38 +215,59 @@ void saveHash(const string& folderPath, string& outputFile, bool verbose, vector
 	csvFile.close();
 }
 
-void compareHashes(const string& folderPath, const string& filePath , string& outputFile, bool& verbose,
-		bool& cVerb, vector<string>& extensions){
+void compareHashes(const string& folderPath, bool& isFile, const string& filePath, string& outputFile,
+		bool& verbose, bool& cVerb, vector<string>& extensions){
 	bool ext = !extensions.empty();
 	string status;
 	vector<vector<string>> csvIn;
+	vector<vector<string>> csvSource;
+	vector<string> files;
+	vector<string>::iterator itr;
+
+	if (isFile){
+		readCsv(folderPath, csvSource);
+		csvSource.erase(csvSource.begin());
+	}
+	else
+		getFilesInFolder(folderPath, files);
 
 	readCsv(filePath, csvIn);
 
 	if (outputFile.empty())
-		outputFile = filesystem::current_path().generic_string() + "/comparison-" + getDate() + ".csv";
+		outputFile = filesystem::current_path().generic_string() + "/comparison-" + getDate() + CSV;
 	ofstream csvFile(outputFile);
 	csvFile << "Status" << DELIMETER << "Filename" << endl;
 
-	vector<string> files;
-	vector<string>::iterator itr;
-	getFilesInFolder(folderPath, files);
-
 	if (ext){
 		filterCsvExtensions(csvIn, extensions);
-		filterExtensions(files, extensions);
+		if (isFile)
+			filterCsvExtensions(csvSource, extensions);
+		else
+			filterExtensions(files, extensions);
 	}
 
 	for (int i = 1; i < int(csvIn.size()); i++){
-		string csvEntry = folderPath + '/' + csvIn[i][0];
+		string csvEntry = csvIn[i][0];
+		if (!isFile){
+			csvEntry = folderPath + '/' + csvIn[i][0];
+		}
 
-		if (checkFile(csvEntry)){
-			string hash = getHash(csvEntry);
+		if (isFile || checkFile(csvEntry)){
+			string hash;
+			if (isFile){
+				for (int j = 0; j < int(csvSource.size()); j++){
+					if (csvEntry.compare(csvSource[j][0]) == 0){
+						hash = csvSource[j][0];
+						csvSource.erase(csvSource.begin() + j);
+					}
+				}
+			}
+			else{
+				hash = getHash(csvEntry);
+				itr = std::find(files.begin(), files.end(), csvEntry);
 
-			itr = std::find(files.begin(), files.end(), csvEntry);
-
-			if (itr != files.end()){
-				files.erase(itr);
+				if (itr != files.end())
+					files.erase(itr);
 			}
 
 			if (hash.compare(csvIn[i][1]) == 0){
@@ -266,10 +287,10 @@ void compareHashes(const string& folderPath, const string& filePath , string& ou
 		}
 		if (verbose || cVerb){
 			if (cVerb && status == ST_PASS){
-				cout << "\033[1;32m" + status + "\033[0m" << "  " << csvEntry << "\n";
+				cout << GREEN + status + BLACK << "  " << csvEntry << "\n";
 			}
 			else if (status != ST_PASS){
-				cout << "\033[1;31m" + status + "\033[0m" << "  " << csvEntry << "\n";
+				cout << RED + status + BLACK << "  " << csvEntry << "\n";
 			}
 		}
 		cout << "[" << i << "/" << csvIn.size() << "] \r";
@@ -278,15 +299,72 @@ void compareHashes(const string& folderPath, const string& filePath , string& ou
 
 	cout << "Done.                                                      " << endl;
 
-	if (!files.empty()){
+	if (isFile){
+		if (!csvSource.empty()){
+			for (vector<string>& sourceEntry : csvSource){
+				csvFile << ST_NEW << DELIMETER << sourceEntry[0] << endl;
+
+				if (verbose || cVerb){
+					status = ST_NEW;
+					cout << GREEN + status + BLACK << "  " << sourceEntry[0] << "\n";
+				}
+			}
+		}
+	}
+	else if (!files.empty()){
 		for (const string& file : files){
 			csvFile << ST_NEW << DELIMETER << file << endl;
 
 			if (verbose || cVerb){
 				status = ST_NEW;
-				cout << "\033[1;32m" + status + "\033[0m" << "  " << file << "\n";
+				cout << GREEN + status + BLACK << "  " << file << "\n";
 			}
 		}
+	}
+
+	csvFile.close();
+
+	cout << "Processed data saved to a file:" << outputFile << endl;
+}
+
+void getFileVersions(const string& filePath, const string& folderPath, string& outputFile){
+	vector<string> files;
+	vector<string> csvExt;
+	bool found = false;
+
+	csvExt.push_back(CSV);
+
+	if (outputFile.empty())
+		outputFile = filesystem::current_path().generic_string() + "/" +
+			filesystem::path(filePath).filename().generic_string() +  "-" + getDate() + CSV;
+
+	getFilesInFolder(folderPath, files);
+	filterExtensions(files, csvExt);
+
+	string hash = getHash(filePath);
+	string fileName = filesystem::path(filePath).filename();
+
+	ofstream csvFile(outputFile);
+	csvFile << filesystem::path(filePath).filename() << endl << hash <<
+			endl << " matches:" << endl;
+
+	for (string& file : files){
+		vector<vector<string>> csvIn;
+		readCsv(file, csvIn);
+		for (vector<string>& entry : csvIn){
+			if (fileName.compare(filesystem::path(entry[0]).filename()) == 0)
+				if (hash.compare(entry[1]) == 0){
+					csvFile << file << endl;
+					cout << filesystem::path(filePath).filename() << GREEN << " matches: " <<
+						BLACK << filesystem::path(file).filename() << endl;
+					found = true;
+				}
+		}
+	}
+
+	if (!found){
+		csvFile << "none";
+		cout << filesystem::path(filePath).filename() << RED << " has no match" << BLACK << ".\n";
 	}
 
 	csvFile.close();

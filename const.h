@@ -2,6 +2,7 @@ const char* DELIMETER = ";";
 
 const char* OPT_SAVE 	= "-s";	//get hashes and save them to a file
 const char* OPT_COMPARE = "-c";	//get hashes and compare them to previously saved hashes
+const char* OPT_MATCH	= "-m";	//list csv`s where selected file(hash) has a match
 const char* OPT_VERBOSE = "-v";	//verbose output
 const char* OPT_FULL 	= "-f";	//include passed checks in comparison
 const char* OPT_EXT 	= "-e";	//compare only provided file extensions
@@ -14,7 +15,13 @@ const char* ST_PRES = "Present";
 const char* ST_HASH = "Hash differs";
 const char* ST_NEW  = "New";
 
+const char* CSV = ".csv";
+
 const char* DATE = "DATE";		//search string
+
+const char* GREEN	= "\033[1;32m";	//console green
+const char* RED		= "\033[1;31m";	//console red
+const char* BLACK	= "\033[0m";	//console black
 
 const int BUFFER_SIZE = 1024;
 const int TIME_LENGTH = 80;
@@ -31,6 +38,8 @@ const char* HELP =
 		"-s [path/to/folder] to save hashes;\n"
 		"-c [path/to/folder] [path/to/file.csv]\n"
 		"to compare hashes from a folder to the ones saved previously;\n"
+		"-m [path/to/file] [path/to/folder/with/previously/saved/hashes]\n"
+		"to find a matching file(hash) in previously saved hashes;\n"
 		"-v to enable verbose mode;\n"
 		"-f to include successes in comparison mode;\n"
 		"-e [filetype1,filetype2,...] to compare only specified file types;\n"

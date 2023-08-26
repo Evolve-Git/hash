@@ -9,118 +9,153 @@ int main(int argc, char *argv[]) {
 	bool cVerb = false;
 	int count = 1;
 	int modeSet = 0;
-	string folderPath;
-	string filePath;
+	string targetPath = "";
+	bool isFile = false;
+	string compPath = "";
 	vector<string> extensions;
-	string outputFile;
+	string outputFile = "";
 
 	if (argc > 2){
 		while (argv[count]){
 			if (strcmp(argv[count], OPT_SAVE) == 0){
 				if (modeSet > 0){
-					cout << "Operation mode declared twice!\n";
+					cout << "Operation mode " << RED << "declared twice!" << BLACK << "\n";
 					goto exit;
 				}
 				else{
-					if (argv[count + 1]){
-						folderPath = argv[count + 1];
-						formatPath(folderPath);
-						count += 2;
+					count += 1;
+					if (argv[count]){
+						targetPath = argv[count];
 						modeSet = 1;
 					}
 					else{
-						cout << "No folder provided!\n";
+						cout << RED << "No folder " << BLACK << "provided!\n";
 						goto exit;
 					}
 				}
 			}
 			else if (strcmp(argv[count], OPT_COMPARE) == 0){
 				if (modeSet > 0){
-					cout << "Operation mode declared twice!\n";
+					cout << "Operation mode " << RED << "declared twice!" << BLACK << "\n";
 					goto exit;
 				}
 				else{
-					if (argv[count + 1]){
-						folderPath = argv[count + 1];
-						count += 1;
+					count += 1;
+					if (argv[count]){
+						targetPath = argv[count];
 					}
 					else{
-						cout << "No folder provided!\n";
+						cout << RED << "No folder " << BLACK << "provided!\n";
 						goto exit;
 					}
-					if (argv[count + 1]){
-						filePath = argv[count + 1];
-						count += 2;
+					count += 1;
+					if (argv[count]){
+						compPath = argv[count];
 						modeSet = 2;
 					}
 					else{
-						cout << "No file for comparison provided!\n";
+						cout << RED << "No file " << BLACK << "for comparison provided!\n";
+						goto exit;
+					}
+				}
+			}
+			else if (strcmp(argv[count], OPT_MATCH) == 0){
+				if (modeSet > 0){
+					cout << "Operation mode " << RED << "declared twice!" << BLACK << "\n";
+					goto exit;
+				}
+				else{
+					count += 1;
+					if (argv[count]){
+						targetPath = argv[count];
+					}
+					else{
+						cout << RED << "No file " << BLACK << "provided!\n";
+						goto exit;
+					}
+					count += 1;
+					if (argv[count]){
+						compPath = argv[count];
+						modeSet = 3;
+					}
+					else{
+						cout << RED << "No folder " << BLACK << "for matching provided!\n";
 						goto exit;
 					}
 				}
 			}
 			else if (strcmp(argv[count], OPT_VERBOSE) == 0){
 				verbose = true;
-				count += 1;
 			}
 			else if (strcmp(argv[count], OPT_FULL) == 0){
 				cVerb = true;
-				count += 1;
 			}
 			else if (strcmp(argv[count], OPT_HELP) == 0){
 				displayHelp();
 				goto exit;
 			}
 			else if (strcmp(argv[count], OPT_EXT) == 0){
-				if (argv[count + 1]){
-					string ext = argv[count + 1];
+				count += 1;
+				if (argv[count]){
+					string ext = argv[count];
 					getFileExtensions(ext, extensions);
-					count += 2;
 				}
 				else{
-					cout << "Extensions option selected but no extensions provided!\n";
+					cout << "Extensions option selected but " << RED <<
+							"no extensions provided" << BLACK << "!\n";
 					goto exit;
 				}
 			}
 			else if (strcmp(argv[count], OPT_OUTFILE) == 0){
-				if (argv[count + 1]){
-					outputFile = argv[count + 1];
+				count += 1;
+				if (argv[count]){
+					outputFile = argv[count];
 					checkOutputFilename(outputFile);
-					count += 2;
 				}
 				else{
-					cout << "Output file name option selected but no filename provided!\n";
+					cout << "Output file name option selected but " << RED <<
+							"no filename provided" << BLACK << "!\n";
 					goto exit;
 				}
 			}
 			else{
-				cout << "Option is not recognized!\n";
+				cout << "Option is " << RED << "not recognized" << BLACK << "!\n";
 				goto exit;
 			}
+			count+= 1;
 		}
 
-		formatPath(folderPath);
-		if (checkFolder(folderPath)){
-			cout << "Target path OK.\n";
-			if (modeSet == 1){
-				saveHash(folderPath, outputFile, verbose, extensions);
+		formatPath(targetPath);
+		if (checkFile(targetPath)){
+			isFile = true;
+		}
+		if (checkFolder(targetPath) || isFile){
+			cout << "Target " << ((isFile) ? "file " : "folder ") <<
+				GREEN << "OK" << BLACK <<".\n";
+			if (modeSet == 1 && !isFile){
+				saveHash(targetPath, outputFile, verbose, extensions);
 			}
 			else if (modeSet == 2){
-				formatPath(filePath);
-				if (checkFile(filePath)){
-					cout << "Target file OK.\n";
-					compareHashes(folderPath, filePath, outputFile, verbose, cVerb, extensions);
+				formatPath(compPath);
+				if (checkFile(compPath)){
+					cout << "Comparison file " << GREEN << "OK" << BLACK <<".\n";
+					compareHashes(targetPath, isFile, compPath, outputFile, verbose, cVerb, extensions);
 				}
 				else{
-					cout << "Csv file does not exist.\n";
+					cout << "Csv file " << RED << "does not exist" << BLACK << ".\n";
 				}
 			}
-			else{
-				cout << "No operation mode selected!\n";
+			else if (modeSet == 3 && isFile){
+				cout << "Comparison path " << GREEN << "OK" << BLACK <<".\n";
+				getFileVersions(targetPath, compPath, outputFile);
 			}
+			else if (isFile)
+				cout << "Folder " << RED << "does not exist." << BLACK << "\n";
+			else
+				cout << RED << "No operation mode " << BLACK << "selected!\n";
 		}
 		else
-			cout << "Folder does not exist.\n";
+			cout << ((isFile) ? "File " : "Folder ") << RED << "does not exist." << BLACK << "\n";
 	}
 	else
 		displayHelp();
