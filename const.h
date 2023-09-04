@@ -9,11 +9,15 @@ const char* OPT_EXT 	= "-e";	//compare only provided file extensions
 const char* OPT_OUTFILE = "-o"; //output file name
 const char* OPT_HELP	= "-h"; //show help
 
-const char* ST_PASS = "OK";
-const char* ST_MISS = "Missing";
-const char* ST_PRES = "Present";
-const char* ST_HASH = "Hash differs";
-const char* ST_NEW  = "New";
+const int MODE_SAVE		= 1;
+const int MODE_COMPARE	= 2;
+const int MODE_MATCH	= 3;
+
+const char* ST_PASS		 = "OK";
+const char* ST_MISS		 = "Missing";
+const char* ST_PRES		 = "Present";
+const char* ST_HASH		 = "Hash differs";
+const char* ST_NEW		 = "New";
 
 const char* CSV = ".csv";
 

@@ -30,7 +30,12 @@ void checkDotPath(string& path){
 	}
 }
 
+void flipSlashes(string& path){
+	replace(path.begin(), path.end(), '\\', '/');
+}
+
 void formatPath(string& folderPath){
+	flipSlashes(folderPath);
 	folderPath.erase(folderPath.find_last_not_of('/') + 1, std::string::npos );
 	checkDotPath(folderPath);
 }

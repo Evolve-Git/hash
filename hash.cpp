@@ -1,7 +1,5 @@
 #include "hash.h"
 
-const int MAX_ARGS = 5;
-
 using namespace std;
 
 int main(int argc, char *argv[]) {
@@ -26,7 +24,7 @@ int main(int argc, char *argv[]) {
 					count += 1;
 					if (argv[count]){
 						targetPath = argv[count];
-						modeSet = 1;
+						modeSet = MODE_SAVE;
 					}
 					else{
 						cout << RED << "No folder " << BLACK << "provided!\n";
@@ -51,7 +49,7 @@ int main(int argc, char *argv[]) {
 					count += 1;
 					if (argv[count]){
 						compPath = argv[count];
-						modeSet = 2;
+						modeSet = MODE_COMPARE;
 					}
 					else{
 						cout << RED << "No file " << BLACK << "for comparison provided!\n";
@@ -76,7 +74,7 @@ int main(int argc, char *argv[]) {
 					count += 1;
 					if (argv[count]){
 						compPath = argv[count];
-						modeSet = 3;
+						modeSet = MODE_MATCH;
 					}
 					else{
 						cout << RED << "No folder " << BLACK << "for matching provided!\n";
@@ -132,10 +130,10 @@ int main(int argc, char *argv[]) {
 		if (checkFolder(targetPath) || isFile){
 			cout << "Target " << ((isFile) ? "file " : "folder ") <<
 				GREEN << "OK" << BLACK <<".\n";
-			if (modeSet == 1 && !isFile){
+			if (modeSet == MODE_SAVE && !isFile){
 				saveHash(targetPath, outputFile, verbose, extensions);
 			}
-			else if (modeSet == 2){
+			else if (modeSet == MODE_COMPARE){
 				formatPath(compPath);
 				if (checkFile(compPath)){
 					cout << "Comparison file " << GREEN << "OK" << BLACK <<".\n";
@@ -145,7 +143,8 @@ int main(int argc, char *argv[]) {
 					cout << "Csv file " << RED << "does not exist" << BLACK << ".\n";
 				}
 			}
-			else if (modeSet == 3 && isFile){
+			else if (modeSet == MODE_MATCH && isFile){
+				formatPath(compPath);
 				cout << "Comparison path " << GREEN << "OK" << BLACK <<".\n";
 				getFileVersions(targetPath, compPath, outputFile);
 			}
