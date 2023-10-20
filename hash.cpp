@@ -148,6 +148,11 @@ int main(int argc, char *argv[]) {
 				cout << "Comparison path " << GREEN << "OK" << BLACK <<".\n";
 				getFileVersions(targetPath, compPath, outputFile);
 			}
+			else if (modeSet == MODE_MATCH && !isFile){
+				formatPath(compPath);
+				cout << "Comparison path " << GREEN << "OK" << BLACK <<".\n";
+				getFolderVersions(targetPath, compPath, outputFile);
+			}
 			else if (isFile)
 				cout << "Folder " << RED << "does not exist." << BLACK << "\n";
 			else

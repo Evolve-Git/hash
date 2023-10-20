@@ -27,7 +27,7 @@ const char* GREEN	= "\033[1;32m";	//console green
 const char* RED		= "\033[1;31m";	//console red
 const char* BLACK	= "\033[0m";	//console black
 
-const int BUFFER_SIZE = 1024;
+const int BUFFER_SIZE = 4096;
 const int TIME_LENGTH = 80;
 const int DATE_LENGTH = 20;
 

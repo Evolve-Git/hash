@@ -376,3 +376,67 @@ void getFileVersions(const string& filePath, const string& folderPath, string& o
 
 	cout << "Processed data saved to a file:" << outputFile << endl;
 }
+
+void getFolderVersions(const string& targetPath, const string& folderPath, string& outputFile){
+	vector<string> files;
+	vector<string> hashes;
+	vector<string> csvExt;
+	vector<string> csvList;
+
+	csvExt.push_back(CSV);
+
+	if (outputFile.empty())
+		outputFile = filesystem::current_path().generic_string() + "/" +
+			filesystem::path(targetPath).filename().generic_string() +  "-" + getDate() + CSV;
+
+	getFilesInFolder(targetPath, files);
+	getFilesInFolder(folderPath, csvList);
+	filterExtensions(csvList, csvExt);
+	cout << "Versions loaded: " << csvList.size() << endl;
+	for (int i = 0; i < int(files.size()); i++){
+		hashes.push_back(getHash(files[i]));
+		stripFolderPath(files[i], targetPath);
+	}
+
+	ofstream csvFile(outputFile);
+	csvFile << targetPath << endl <<
+		endl << " matches:" << endl;
+	cout << targetPath << GREEN << " matches: " << BLACK << endl;
+
+	for (string& csv : csvList){
+		vector<vector<string>> csvIn;
+		readCsv(csv, csvIn);
+		bool found = false;
+		int cnt = 0;
+
+		for (int i = 0; i < int(files.size()); i++){
+			for (int j = 1; j < int(csvIn.size()); j++){
+				if (std::find(csvIn[j].begin(), csvIn[j].end(), files[i]) != csvIn[j].end())
+					if (csvIn[j][1].compare(hashes[i]) == 0){
+						cnt++;
+						found = true;
+					}
+			}
+		}
+
+		csvFile << filesystem::path(csv).filename().generic_string() << " ";
+		cout << filesystem::path(csv).filename().generic_string() << " ";
+		if (found){
+			float percent = static_cast<float>(cnt)/static_cast<float>(files.size())*100;
+			csvFile << cnt << "/" << files.size() << " = " << percent << "%" << endl;
+			if (percent > 75)
+				cout << GREEN << cnt << BLACK << "/" << files.size() << " = " << GREEN << percent << "%" << BLACK << endl;
+			else
+				cout << RED << cnt << BLACK << "/" << files.size() << " = " << percent << "%" << endl;
+		}
+		else{
+			csvFile << "none" << endl;
+			cout << RED << "none" << BLACK << endl;
+		}
+
+	}
+
+	csvFile.close();
+
+	cout << "Processed data saved to a file:" << outputFile << endl;
+}
